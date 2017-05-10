@@ -6,7 +6,7 @@ module.exports = {
   deleteIndex,
   analyzeIndex,
   pipeIndex,
-  pumpIndex,
+  pumpToIndex,
 };
 
 function switchAlias({ logger, config }, { type, from, to }) {
@@ -231,8 +231,22 @@ function getNextBatch (
   });
 }
 
-function pumpIndex({ logger, config }, { type, version }) {
+function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
+  return pumpFunction({ logger, putToIndex });
+
   function putToIndex(items) {
+    console.log(items.reduce((ops, item) => {
+      return ops.concat([
+        { create: {
+          _index: buildIndexName(config, type, version),
+          _type: type,
+          _id: item._id
+        } },
+        item._source
+      ]);
+    }, [])
+    .map((op) => JSON.stringify(op))
+    .join('\n'))
     return new Promise((resolve, reject) => {
       request({
         url: [
@@ -257,6 +271,7 @@ function pumpIndex({ logger, config }, { type, version }) {
           reject(err);
           return;
         }
+        logger.debug(res.body);
         resolve(res.body);
       });
     });

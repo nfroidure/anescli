@@ -9,7 +9,7 @@ const JSON_EXT = '.json';
 const JS_EXT = '.js';
 const AVAILABLE_TYPES = (() => {
   try {
-    return fs.readdirSync('./mappings')
+    return fs.readdirSync(path.join(process.cwd(), 'mappings'))
       .filter(file => file.endsWith(JSON_EXT))
       .map(file => file.slice(0, file.length - JSON_EXT.length));
   } catch(err) {
@@ -18,7 +18,7 @@ const AVAILABLE_TYPES = (() => {
 })();
 const AVAILABLE_PUMPS = (() => {
   try {
-    return fs.readdirSync('./pumps')
+    return fs.readdirSync(path.join(process.cwd(), 'pumps'))
       .filter(file => file.endsWith(JS_EXT))
       .map(file => file.slice(0, file.length - JS_EXT.length));
   } catch(err) {
@@ -45,7 +45,11 @@ prog
   .action(({ type, from, to }, options, logger) => {
     let transformFunction;
     try {
-      transformFunction = require('./transformers/' + type + JS_EXT);
+      transformFunction = require(path.join(
+        process.cwd(),
+        'transformers',
+        type + JS_EXT
+      ));
     } catch (err) {
       logger.debug('No tranformation found.', err.stack);
       transformFunction = identity;
@@ -57,7 +61,11 @@ prog
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .action(({ type, version }, options, logger) => {
-    const mappings = JSON.parse(fs.readFileSync('./mappings/' + type + JSON_EXT));
+    const mappings = JSON.parse(fs.readFileSync(path.join(
+      process.cwd(),
+      'mappings',
+      type + JSON_EXT
+    )));
 
     _runAction(logger, es.createIndex, { type, version, mappings });
   })
@@ -79,7 +87,12 @@ prog
   .argument('<type>', 'Index type', PUMPABLE_INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .action(({ type, version }, options, logger) => {
-    const pumpFunction = require('./pumps/' + type + JS_EXT);
+    const pumpFunction = require(path.join(
+      process.cwd(),
+      'pumps',
+      type + JS_EXT
+    ));
+
     _runAction(logger, es.pumpToIndex, { type, version, pumpFunction });
   });
 

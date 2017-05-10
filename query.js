@@ -1,4 +1,6 @@
-const config = require('./config').pg;
+const path = require('path');
+const config = require(path.join(process.cwd(), 'config')).pg;
+const pg = require('pg');
 const pool = new pg.Pool(config);
 const query = (...args) => {
   return new Promise((resolve, reject) => {
