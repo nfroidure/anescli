@@ -130,22 +130,22 @@ function pipeIndex({ logger, config }, { type, from, to, transformFunction }) {
     });
   })
   .then((body) => {
-    const scrollId = res.body._scroll_id;
+    const scrollId = body._scroll_id;
     let page = 1;
     logger.info('New scroll : ' + scrollId);
-    putToTheNewIndex(
+    return putToTheNewIndex(
       { logger, config },
       { type, from, to, transformFunction },
       page,
       scrollId,
-      res.body.hits.hits
+      body.hits.hits
     );
   });
 }
 
 function putToTheNewIndex (
   { logger, config },
-  { type, from, to },
+  { type, from, to, transformFunction },
   page,
   scrollId,
   items
@@ -194,7 +194,7 @@ function putToTheNewIndex (
 
 function getNextBatch (
   { logger, config },
-  { type, from, to },
+  { type, from, to, transformFunction },
   page,
   scrollId
 ) {
@@ -219,7 +219,7 @@ function getNextBatch (
       if (res.body.hits.hits.length) {
         resolve(putToTheNewIndex(
           { logger, config },
-          { type, from, to },
+          { type, from, to, transformFunction },
           page,
           scrollId,
           res.body.hits.hits

@@ -51,7 +51,7 @@ prog
       transformFunction = identity;
     }
 
-    _runAction(logger, es.pipe, { type, from, to, transformFunction });
+    _runAction(logger, es.pipeIndex, { type, from, to, transformFunction });
   })
   .command('create', 'Create an index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
