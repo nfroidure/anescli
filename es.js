@@ -5,8 +5,16 @@ module.exports = {
   createIndex,
   deleteIndex,
   analyzeIndex,
+  statsFieldData,
   pipeIndex,
   pumpToIndex,
+  mappings,
+  nodeStats: _simpleGet.bind(null, '_nodes/stats'),
+  clusterStats: _simpleGet.bind(null, '_cluster/stats'),
+  pendingTasks: _simpleGet.bind(null, '_cluster/pending_tasks'),
+  settings: _simpleGet.bind(null, '_cluster/settings'),
+  state: _simpleGet.bind(null, '_cluster/state'),
+  health: _simpleGet.bind(null, '_cluster/health?level=indices'),
 };
 
 function switchAlias({ logger, config }, { type, from, to }) {
@@ -98,6 +106,26 @@ function analyzeIndex({ logger, config }, { type, version, field, text }) {
         field,
         text
       }
+    }, (err, res) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(res.body);
+    });
+  });
+}
+
+function mappings({ logger, config }, { type, version }) {
+  return new Promise((resolve, reject) => {
+    request({
+      url: [
+        config.elastic,
+        buildIndexName(config, type, version),
+        '_mappings',
+      ].join('/'),
+      method: 'GET',
+      json: true,
     }, (err, res) => {
       if (err) {
         reject(err);
@@ -276,6 +304,48 @@ function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
       });
     });
   }
+}
+
+function statsFieldData({ logger, config }, { fields = '*' }) {
+  return new Promise((resolve, reject) => {
+    request({
+      url: [
+        config.elastic,
+        '_stats',
+        'fielddata',
+      ].join('/'),
+      method: 'GET',
+      json: true,
+      query: {
+        fields,
+      }
+    }, (err, res) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(res.body);
+    });
+  });
+}
+
+function _simpleGet(path, { logger, config }, unused) {
+  return new Promise((resolve, reject) => {
+    request({
+      url: [
+        config.elastic,
+        path,
+      ].join('/'),
+      method: 'GET',
+      json: true,
+    }, (err, res) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(res.body);
+    });
+  });
 }
 
 function buildIndexName(config, type, version) {

@@ -28,6 +28,7 @@ const AVAILABLE_PUMPS = (() => {
 const INDEX_TYPE_REGEXP = new RegExp('^' + AVAILABLE_TYPES.join('|') + '$');
 const PUMPABLE_INDEX_TYPE_REGEXP = new RegExp('^' + AVAILABLE_PUMPS.join('|') + '$');
 const INDEX_VERSION_REGEXP = /^v\d+\.\d+\.\d+$/;
+const FIELDS_REGEXP = /((^|,)[a-z0-9]+)+$/;
 
 prog
   .version(require('./package.json').version)
@@ -94,6 +95,41 @@ prog
     ));
 
     _runAction(logger, es.pumpToIndex, { type, version, pumpFunction });
+  })
+  .command('stats-fielddata', 'Retrieve field data usage stats.')
+  .argument('[fields]', 'Fields to stats', FIELDS_REGEXP)
+  .action(({ fields }, options, logger) => {
+    _runAction(logger, es.statsFieldData, { fields });
+  })
+  .command('stats-nodes', 'Retrieve the nodes stats.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.nodeStats, {});
+  })
+  .command('stats-cluster', 'Retrieve the clusters stats.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.clusterStats, {});
+  })
+  .command('pending-tasks', 'Retrieve the pending tasks.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.pendingTasks, {});
+  })
+  .command('mappings', 'Returns an index mappings.')
+  .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
+  .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
+  .action(({ type, version, field, text }, options, logger) => {
+    _runAction(logger, es.mappings, { type, version, field, text });
+  })
+  .command('settings', 'Retrieve the cluster settings.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.settings, {});
+  })
+  .command('state', 'Retrieve the cluster state.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.state, {});
+  })
+  .command('health', 'Retrieve the cluster health.')
+  .action((unused, options, logger) => {
+    _runAction(logger, es.health, {});
   });
 
 prog.parse(process.argv);
