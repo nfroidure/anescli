@@ -1,6 +1,6 @@
 {
   "name": "anescli",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Simple and experimental CLI tool for Elastic Search management.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
