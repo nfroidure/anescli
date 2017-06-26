@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint global-require:0 */
+'use strict';
 
 const prog = require('caporal');
 const path = require('path');
@@ -16,7 +18,7 @@ const AVAILABLE_TYPES = (() => {
     return fs.readdirSync(MAPPINGS_DIR)
       .filter(file => file.endsWith(JSON_EXT))
       .map(file => file.slice(0, file.length - JSON_EXT.length));
-  } catch(err) {
+  } catch (err) {
     return [];
   }
 })();
@@ -25,7 +27,7 @@ const AVAILABLE_PUMPS = (() => {
     return fs.readdirSync(PUMPS_DIR)
       .filter(file => file.endsWith(JS_EXT))
       .map(file => file.slice(0, file.length - JS_EXT.length));
-  } catch(err) {
+  } catch (err) {
     return [];
   }
 })();

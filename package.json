@@ -2,8 +2,24 @@
   "name": "anescli",
   "version": "0.1.0",
   "description": "Simple and experimental CLI tool for Elastic Search management.",
+  "metapak": {
+    "data": {
+      "testsFiles": "index.mocha.js",
+      "files": "bin.js es.js query.js"
+    }
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "cli": "env NODE_ENV=${NODE_ENV:-cli}",
+    "cover": "istanbul cover _mocha --report html -- index.mocha.js -R spec -t 5000",
+    "coveralls": "istanbul cover _mocha --report lcovonly -- index.mocha.js -R spec -t 5000 && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
+    "cz": "env NODE_ENV=${NODE_ENV:-cli} git cz",
+    "lint": "eslint bin.js es.js query.js",
+    "metapak": "metapak || echo 'Please `npm install --save-dev metapak`' && exit 0",
+    "postinstall": "npm run metapak --silent",
+    "preversion": "npm t && npm run lint",
+    "test": "mocha index.mocha.js",
+    "version": "npm run changelog && git add CHANGELOG.md"
   },
   "bin": {
     "anescli": "bin.js"
@@ -12,7 +28,43 @@
   "license": "MIT",
   "dependencies": {
     "caporal": "^0.5.0",
+    "debug": "2.6.1",
     "pg": "^6.1.5",
     "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "commitizen": "^2.9.6",
+    "conventional-changelog-cli": "^1.2.0",
+    "coveralls": "2.11.15",
+    "cz-conventional-changelog": "^2.0.0",
+    "eslint": "3.16.0",
+    "eslint-config-simplifield": "4.1.1",
+    "istanbul": "0.4.5",
+    "metapak": "0.0.20",
+    "metapak-nfroidure": "^0.6.0",
+    "mocha": "3.2.0",
+    "mocha-lcov-reporter": "1.3.0"
+  },
+  "engines": {
+    "node": ">=6.9.5"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "greenkeeper": {
+    "ignore": [
+      "debug",
+      "eslint",
+      "eslint-config-simplifield",
+      "mocha",
+      "mocha-lcov-reporter",
+      "commitizen",
+      "cz-conventional-changelog",
+      "coveralls",
+      "istanbul",
+      "conventional-changelog-cli"
+    ]
   }
 }

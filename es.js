@@ -1,3 +1,5 @@
+'use strict';
+
 const request = require('request');
 
 module.exports = {
@@ -25,26 +27,26 @@ function switchAlias({ logger, config }, { type, from, to }) {
       {
         url: [
           config.elastic,
-          '_aliases'
+          '_aliases',
         ].join('/'),
         method: 'POST',
         json: true,
         body: {
           actions: (
-            from
-            ? [{ remove: {
+            from ?
+            [{ remove: {
               index: buildIndexName(config, type, from),
               alias: buildAliasName(config, type, from),
-            } }]
-            : []
+            } }] :
+            []
           ).concat([{ add: {
             index: buildIndexName(config, type, to),
             alias: buildAliasName(config, type, to),
-          } }])
-        }
+          } }]),
+        },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -61,18 +63,18 @@ function createIndex({ logger, config }, { type, version, mappings }) {
       {
         url: [
           config.elastic,
-          buildIndexName(config, type, version)
+          buildIndexName(config, type, version),
         ].join('/'),
         method: 'PUT',
         json: true,
         body: {
           mappings: {
-            [type]: mappings
-          }
+            [type]: mappings,
+          },
         },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -95,7 +97,7 @@ function deleteIndex({ logger, config }, { type, version }) {
         json: true,
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -119,11 +121,11 @@ function analyzeIndex({ logger, config }, { type, version, field, text }) {
         json: true,
         body: {
           field,
-          text
-        }
+          text,
+        },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -147,7 +149,7 @@ function mappings({ logger, config }, { type, version }) {
         json: true,
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -170,11 +172,11 @@ function pipeIndex({ logger, config }, { type, from, to, transformFunction }) {
         method: 'POST',
         json: true,
         body: {
-          size: 1000
-        }
+          size: 1000,
+        },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -195,7 +197,7 @@ function pipeIndex({ logger, config }, { type, from, to, transformFunction }) {
   });
 }
 
-function putToTheNewIndex (
+function putToTheNewIndex( // eslint-disable-line
   { logger, config },
   { type, from, to, transformFunction },
   page,
@@ -216,21 +218,22 @@ function putToTheNewIndex (
         // Here we do not use JSON but the ElasticSearch special batch
         // command thing
         method: 'POST',
-        body: items.reduce((ops, item) => {
-          return ops.concat([
+        body: items.reduce((ops, item) =>
+          ops.concat([
             { create: {
               _index: buildIndexName(config, type, to),
               _type: type,
-              _id: item._id
+              _id: item._id,
             } },
             transformFunction(item._source),
-          ]);
-        }, [])
-        .map((op) => JSON.stringify(op))
-        .join('\n')
+          ]),
+          []
+        )
+        .map(op => JSON.stringify(op))
+        .join('\n'),
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         logger.error('Error:', err.stack);
         logger.debug(page);
         reject(err);
@@ -248,7 +251,7 @@ function putToTheNewIndex (
   });
 }
 
-function getNextBatch (
+function getNextBatch(
   { logger, config },
   { type, from, to, transformFunction },
   page,
@@ -268,15 +271,15 @@ function getNextBatch (
         json: true,
         body: {
           scroll: '3m',
-          scroll_id: scrollId
-        }
+          scroll_id: scrollId,
+        },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
-      if (res.body.hits.hits.length) {
+      if(res.body.hits.hits.length) {
         resolve(putToTheNewIndex(
           { logger, config },
           { type, from, to, transformFunction },
@@ -295,18 +298,6 @@ function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
   return pumpFunction({ logger, putToIndex });
 
   function putToIndex(items) {
-    console.log(items.reduce((ops, item) => {
-      return ops.concat([
-        { create: {
-          _index: buildIndexName(config, type, version),
-          _type: type,
-          _id: item._id
-        } },
-        item._source
-      ]);
-    }, [])
-    .map((op) => JSON.stringify(op))
-    .join('\n'))
     return new Promise((resolve, reject) => {
       request(Object.assign(
         {},
@@ -314,24 +305,25 @@ function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
         {
           url: [
             config.elastic,
-            '_bulk'
+            '_bulk',
           ].join('/'),
           method: 'POST',
-          body: items.reduce((ops, item) => {
-            return ops.concat([
+          body: items.reduce((ops, item) =>
+            ops.concat([
               { create: {
                 _index: buildIndexName(config, type, version),
                 _type: type,
-                _id: item._id
+                _id: item._id,
               } },
-              item._source
-            ]);
-          }, [])
-          .map((op) => JSON.stringify(op))
-          .join('\n') + '\n'
+              item._source,
+            ]),
+            []
+          )
+          .map(op => JSON.stringify(op))
+          .join('\n') + '\n',
         }
       ), (err, res) => {
-        if (err) {
+        if(err) {
           reject(err);
           return;
         }
@@ -357,10 +349,10 @@ function statsFieldData({ logger, config }, { fields = '*' }) {
         json: true,
         query: {
           fields,
-        }
+        },
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
@@ -383,7 +375,7 @@ function _simpleGet(path, { logger, config }, unused) {
         json: true,
       }
     ), (err, res) => {
-      if (err) {
+      if(err) {
         reject(err);
         return;
       }
