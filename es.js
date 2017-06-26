@@ -19,27 +19,31 @@ module.exports = {
 
 function switchAlias({ logger, config }, { type, from, to }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        '_aliases'
-      ].join('/'),
-      method: 'POST',
-      json: true,
-      body: {
-        actions: (
-          from
-          ? [{ remove: {
-            index: buildIndexName(config, type, from),
-            alias: buildAliasName(config, type, from),
-          } }]
-          : []
-        ).concat([{ add: {
-          index: buildIndexName(config, type, to),
-          alias: buildAliasName(config, type, to),
-        } }])
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          '_aliases'
+        ].join('/'),
+        method: 'POST',
+        json: true,
+        body: {
+          actions: (
+            from
+            ? [{ remove: {
+              index: buildIndexName(config, type, from),
+              alias: buildAliasName(config, type, from),
+            } }]
+            : []
+          ).concat([{ add: {
+            index: buildIndexName(config, type, to),
+            alias: buildAliasName(config, type, to),
+          } }])
+        }
       }
-    }, (err, res) => {
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -51,19 +55,23 @@ function switchAlias({ logger, config }, { type, from, to }) {
 
 function createIndex({ logger, config }, { type, version, mappings }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        buildIndexName(config, type, version)
-      ].join('/'),
-      method: 'PUT',
-      json: true,
-      body: {
-        mappings: {
-          [type]: mappings
-        }
-      },
-    }, (err, res) => {
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          buildIndexName(config, type, version)
+        ].join('/'),
+        method: 'PUT',
+        json: true,
+        body: {
+          mappings: {
+            [type]: mappings
+          }
+        },
+      }
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -75,14 +83,18 @@ function createIndex({ logger, config }, { type, version, mappings }) {
 
 function deleteIndex({ logger, config }, { type, version }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        buildIndexName(config, type, version),
-      ].join('/'),
-      method: 'DELETE',
-      json: true,
-    }, (err, res) => {
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          buildIndexName(config, type, version),
+        ].join('/'),
+        method: 'DELETE',
+        json: true,
+      }
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -94,19 +106,23 @@ function deleteIndex({ logger, config }, { type, version }) {
 
 function analyzeIndex({ logger, config }, { type, version, field, text }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        buildIndexName(config, type, version),
-        '_analyze',
-      ].join('/'),
-      method: 'GET',
-      json: true,
-      body: {
-        field,
-        text
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          buildIndexName(config, type, version),
+          '_analyze',
+        ].join('/'),
+        method: 'GET',
+        json: true,
+        body: {
+          field,
+          text
+        }
       }
-    }, (err, res) => {
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -118,15 +134,19 @@ function analyzeIndex({ logger, config }, { type, version, field, text }) {
 
 function mappings({ logger, config }, { type, version }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        buildIndexName(config, type, version),
-        '_mappings',
-      ].join('/'),
-      method: 'GET',
-      json: true,
-    }, (err, res) => {
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          buildIndexName(config, type, version),
+          '_mappings',
+        ].join('/'),
+        method: 'GET',
+        json: true,
+      }
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -138,18 +158,22 @@ function mappings({ logger, config }, { type, version }) {
 
 function pipeIndex({ logger, config }, { type, from, to, transformFunction }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        buildIndexName(config, type, from),
-        '_search?scroll=1m',
-      ].join('/'),
-      method: 'POST',
-      json: true,
-      body: {
-        size: 1000
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          buildIndexName(config, type, from),
+          '_search?scroll=1m',
+        ].join('/'),
+        method: 'POST',
+        json: true,
+        body: {
+          size: 1000
+        }
       }
-    }, (err, res) => {
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -180,28 +204,32 @@ function putToTheNewIndex (
 ) {
   logger.log(`Got ${items.length} items in page ${page}.`);
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        '_bulk',
-      ].join('/'),
-      headers: {},
-      // Here we do not use JSON but the ElasticSearch special batch
-      // command thing
-      method: 'POST',
-      body: items.reduce((ops, item) => {
-        return ops.concat([
-          { create: {
-            _index: buildIndexName(config, type, to),
-            _type: type,
-            _id: item._id
-          } },
-          transformFunction(item._source),
-        ]);
-      }, [])
-      .map((op) => JSON.stringify(op))
-      .join('\n')
-    }, (err, res) => {
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          '_bulk',
+        ].join('/'),
+        headers: {},
+        // Here we do not use JSON but the ElasticSearch special batch
+        // command thing
+        method: 'POST',
+        body: items.reduce((ops, item) => {
+          return ops.concat([
+            { create: {
+              _index: buildIndexName(config, type, to),
+              _type: type,
+              _id: item._id
+            } },
+            transformFunction(item._source),
+          ]);
+        }, [])
+        .map((op) => JSON.stringify(op))
+        .join('\n')
+      }
+    ), (err, res) => {
       if (err) {
         logger.error('Error:', err.stack);
         logger.debug(page);
@@ -227,19 +255,23 @@ function getNextBatch (
   scrollId
 ) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        '_search',
-        'scroll',
-      ].join('/'),
-      method: 'POST',
-      json: true,
-      body: {
-        scroll: '3m',
-        scroll_id: scrollId
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          '_search',
+          'scroll',
+        ].join('/'),
+        method: 'POST',
+        json: true,
+        body: {
+          scroll: '3m',
+          scroll_id: scrollId
+        }
       }
-    }, (err, res) => {
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -276,25 +308,29 @@ function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
     .map((op) => JSON.stringify(op))
     .join('\n'))
     return new Promise((resolve, reject) => {
-      request({
-        url: [
-          config.elastic,
-          '_bulk'
-        ].join('/'),
-        method: 'POST',
-        body: items.reduce((ops, item) => {
-          return ops.concat([
-            { create: {
-              _index: buildIndexName(config, type, version),
-              _type: type,
-              _id: item._id
-            } },
-            item._source
-          ]);
-        }, [])
-        .map((op) => JSON.stringify(op))
-        .join('\n')
-      }, (err, res) => {
+      request(Object.assign(
+        {},
+        config.options || {},
+        {
+          url: [
+            config.elastic,
+            '_bulk'
+          ].join('/'),
+          method: 'POST',
+          body: items.reduce((ops, item) => {
+            return ops.concat([
+              { create: {
+                _index: buildIndexName(config, type, version),
+                _type: type,
+                _id: item._id
+              } },
+              item._source
+            ]);
+          }, [])
+          .map((op) => JSON.stringify(op))
+          .join('\n') + '\n'
+        }
+      ), (err, res) => {
         if (err) {
           reject(err);
           return;
@@ -308,18 +344,22 @@ function pumpToIndex({ logger, config }, { type, version, pumpFunction }) {
 
 function statsFieldData({ logger, config }, { fields = '*' }) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        '_stats',
-        'fielddata',
-      ].join('/'),
-      method: 'GET',
-      json: true,
-      query: {
-        fields,
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          '_stats',
+          'fielddata',
+        ].join('/'),
+        method: 'GET',
+        json: true,
+        query: {
+          fields,
+        }
       }
-    }, (err, res) => {
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -331,14 +371,18 @@ function statsFieldData({ logger, config }, { fields = '*' }) {
 
 function _simpleGet(path, { logger, config }, unused) {
   return new Promise((resolve, reject) => {
-    request({
-      url: [
-        config.elastic,
-        path,
-      ].join('/'),
-      method: 'GET',
-      json: true,
-    }, (err, res) => {
+    request(Object.assign(
+      {},
+      config.options || {},
+      {
+        url: [
+          config.elastic,
+          path,
+        ].join('/'),
+        method: 'GET',
+        json: true,
+      }
+    ), (err, res) => {
       if (err) {
         reject(err);
         return;
