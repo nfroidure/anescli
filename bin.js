@@ -41,7 +41,7 @@ prog
   .argument('<to>', 'New index version', INDEX_VERSION_REGEXP)
   .argument('[from]', 'Old index version', INDEX_VERSION_REGEXP)
   .action(({ type, from, to }, options, logger) => {
-    _runAction(logger, es.switch, { type, from, to });
+    _runAction(logger, es.switchAlias, { type, from, to });
   })
   .command('pipe', 'Copy an index content to another index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
