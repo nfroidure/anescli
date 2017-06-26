@@ -5,11 +5,15 @@ const path = require('path');
 const fs = require('fs');
 const es = require('./es');
 const config = require(path.join(process.cwd(), 'config'));
+const MAPPINGS_DIR = process.env.MAPPINGS_DIR ||
+  path.join(process.cwd(), 'mappings');
+const PUMPS_DIR = process.env.PUMPS_DIR ||
+  path.join(process.cwd(), 'pumps');
 const JSON_EXT = '.json';
 const JS_EXT = '.js';
 const AVAILABLE_TYPES = (() => {
   try {
-    return fs.readdirSync(path.join(process.cwd(), 'mappings'))
+    return fs.readdirSync(MAPPINGS_DIR)
       .filter(file => file.endsWith(JSON_EXT))
       .map(file => file.slice(0, file.length - JSON_EXT.length));
   } catch(err) {
@@ -18,7 +22,7 @@ const AVAILABLE_TYPES = (() => {
 })();
 const AVAILABLE_PUMPS = (() => {
   try {
-    return fs.readdirSync(path.join(process.cwd(), 'pumps'))
+    return fs.readdirSync(PUMPS_DIR)
       .filter(file => file.endsWith(JS_EXT))
       .map(file => file.slice(0, file.length - JS_EXT.length));
   } catch(err) {
@@ -63,8 +67,7 @@ prog
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .action(({ type, version }, options, logger) => {
     const mappings = JSON.parse(fs.readFileSync(path.join(
-      process.cwd(),
-      'mappings',
+      MAPPINGS_DIR,
       type + JSON_EXT
     )));
 
@@ -89,8 +92,7 @@ prog
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .action(({ type, version }, options, logger) => {
     const pumpFunction = require(path.join(
-      process.cwd(),
-      'pumps',
+      PUMPS_DIR,
       type + JS_EXT
     ));
 
