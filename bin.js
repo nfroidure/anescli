@@ -6,13 +6,20 @@ const prog = require('caporal');
 const path = require('path');
 const fs = require('fs');
 const es = require('./es');
-const config = require(path.join(process.cwd(), 'config'));
+const BASE_DIR = process.env.BASE_DIR ||
+  process.cwd();
+const config = require(
+  process.env.CONFIG_DIR ||
+  path.join(BASE_DIR, 'config')
+);
+const TRANSFORMERS_DIR = process.env.TRANSFORMERS_DIR ||
+  path.join(BASE_DIR, 'transformers');
 const MAPPINGS_DIR = process.env.MAPPINGS_DIR ||
-  path.join(process.cwd(), 'mappings');
+  path.join(BASE_DIR, 'mappings');
 const TEMPLATES_DIR = process.env.TEMPLATES_DIR ||
-  path.join(process.cwd(), 'mappings');
+  path.join(BASE_DIR, 'mappings');
 const PUMPS_DIR = process.env.PUMPS_DIR ||
-  path.join(process.cwd(), 'pumps');
+  path.join(BASE_DIR, 'pumps');
 const JSON_EXT = '.json';
 const JS_EXT = '.js';
 const AVAILABLE_TYPES = (() => {
@@ -57,8 +64,7 @@ prog
     let transformFunction;
     try {
       transformFunction = require(path.join(
-        process.cwd(),
-        'transformers',
+        TRANSFORMERS_DIR,
         type + JS_EXT
       ));
     } catch (err) {
