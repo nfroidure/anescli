@@ -9,6 +9,8 @@ const es = require('./es');
 const config = require(path.join(process.cwd(), 'config'));
 const MAPPINGS_DIR = process.env.MAPPINGS_DIR ||
   path.join(process.cwd(), 'mappings');
+const TEMPLATES_DIR = process.env.TEMPLATES_DIR ||
+  path.join(process.cwd(), 'mappings');
 const PUMPS_DIR = process.env.PUMPS_DIR ||
   path.join(process.cwd(), 'pumps');
 const JSON_EXT = '.json';
@@ -42,14 +44,16 @@ prog
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<to>', 'New index version', INDEX_VERSION_REGEXP)
   .argument('[from]', 'Old index version', INDEX_VERSION_REGEXP)
-  .action(({ type, from, to }, options, logger) => {
-    _runAction(logger, es.switchAlias, { type, from, to });
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, from, to, suffix }, options, logger) => {
+    _runAction(logger, es.switchAlias, { type, from, to, suffix });
   })
   .command('pipe', 'Copy an index content to another index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<to>', 'New index version', INDEX_VERSION_REGEXP)
   .argument('[from]', 'Old index version', INDEX_VERSION_REGEXP)
-  .action(({ type, from, to }, options, logger) => {
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, from, to, suffix }, options, logger) => {
     let transformFunction;
     try {
       transformFunction = require(path.join(
@@ -62,43 +66,47 @@ prog
       transformFunction = identity;
     }
 
-    _runAction(logger, es.pipeIndex, { type, from, to, transformFunction });
+    _runAction(logger, es.pipeIndex, { type, from, to, suffix, transformFunction });
   })
   .command('create', 'Create an index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
-  .action(({ type, version }, options, logger) => {
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, version, suffix }, options, logger) => {
     const mappings = JSON.parse(fs.readFileSync(path.join(
       MAPPINGS_DIR,
       type + JSON_EXT
     )));
 
-    _runAction(logger, es.createIndex, { type, version, mappings });
+    _runAction(logger, es.createIndex, { type, version, suffix, mappings });
   })
   .command('delete', 'Delete an index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
-  .action(({ type, version }, options, logger) => {
-    _runAction(logger, es.deleteIndex, { type, version });
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, version, suffix }, options, logger) => {
+    _runAction(logger, es.deleteIndex, { type, version, suffix });
   })
   .command('analyze', 'Analyze an index.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .argument('<field>', 'Field to analyze')
   .argument('<text>', 'Text for that field')
-  .action(({ type, version, field, text }, options, logger) => {
-    _runAction(logger, es.analyzeIndex, { type, version, field, text });
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, version, suffix, field, text }, options, logger) => {
+    _runAction(logger, es.analyzeIndex, { type, version, suffix, field, text });
   })
   .command('pump', 'Pump a source items to an index.')
   .argument('<type>', 'Index type', PUMPABLE_INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
-  .action(({ type, version }, options, logger) => {
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, version, suffix }, options, logger) => {
     const pumpFunction = require(path.join(
       PUMPS_DIR,
       type + JS_EXT
     ));
 
-    _runAction(logger, es.pumpToIndex, { type, version, pumpFunction });
+    _runAction(logger, es.pumpToIndex, { type, version, suffix, pumpFunction });
   })
   .command('stats-fielddata', 'Retrieve field data usage stats.')
   .argument('[fields]', 'Fields to stats', FIELDS_REGEXP)
@@ -117,11 +125,41 @@ prog
   .action((unused, options, logger) => {
     _runAction(logger, es.pendingTasks, {});
   })
+  .command('createTemplate', 'Create a template.')
+  .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
+  .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
+  .argument('[suffixPattern]', 'Index suffix if some')
+  .action(({ type, version, suffixPattern }, options, logger) => {
+    const mappings = JSON.parse(fs.readFileSync(path.join(
+      MAPPINGS_DIR,
+      type + JSON_EXT
+    )));
+    let template = {};
+
+    try {
+      template = JSON.parse(fs.readFileSync(path.join(
+        TEMPLATES_DIR,
+        type + JSON_EXT
+      )));
+    } catch (err) {
+      logger.error('No custom template found, using default one.');
+    }
+
+    _runAction(logger, es.createTemplate, { type, version, suffixPattern, mappings, template });
+  })
+  .command('deleteTemplate', 'Delete a template.')
+  .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
+  .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
+  .argument('[suffixPattern]', 'Index suffix if some')
+  .action(({ type, version, suffixPattern }, options, logger) => {
+    _runAction(logger, es.createTemplate, { type, version, suffixPattern });
+  })
   .command('mappings', 'Returns an index mappings.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
-  .action(({ type, version, field, text }, options, logger) => {
-    _runAction(logger, es.mappings, { type, version, field, text });
+  .argument('[suffix]', 'Index suffix if some')
+  .action(({ type, version, suffix, field, text }, options, logger) => {
+    _runAction(logger, es.mappings, { type, version, suffix, field, text });
   })
   .command('settings', 'Retrieve the cluster settings.')
   .action((unused, options, logger) => {
