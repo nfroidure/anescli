@@ -1,3 +1,13 @@
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/nfroidure/anescli/compare/v0.2.0...v0.3.0) (2017-11-27)
+
+
+### Features
+
+* **Templates:** Allow to use indices templates ([709e1fc](https://github.com/nfroidure/anescli/commit/709e1fc))
+
+
+
 <a name="0.2.0"></a>
 # [0.2.0](https://github.com/nfroidure/anescli/compare/v0.1.0...v0.2.0) (2017-06-26)
 
