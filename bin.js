@@ -136,10 +136,6 @@ prog
   .argument('<version>', 'New index version', INDEX_VERSION_REGEXP)
   .argument('[suffixPattern]', 'Index suffix if some')
   .action(({ type, version, suffixPattern }, options, logger) => {
-    const mappings = JSON.parse(fs.readFileSync(path.join(
-      MAPPINGS_DIR,
-      type + JSON_EXT
-    )));
     let template = {};
 
     try {
@@ -151,7 +147,7 @@ prog
       logger.error('No custom template found, using default one.');
     }
 
-    _runAction(logger, es.createTemplate, { type, version, suffixPattern, mappings, template });
+    _runAction(logger, es.createTemplate, { type, version, suffixPattern, template });
   })
   .command('deleteTemplate', 'Delete a template.')
   .argument('<type>', 'Index type', INDEX_TYPE_REGEXP)

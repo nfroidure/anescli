@@ -121,12 +121,12 @@ function createTemplate({
       ].join('/'),
       method: 'PUT',
       json: true,
-      body: Object.assign({
-        template: buildIndexName(config, type, version, suffixPattern),
+      body: {
+        index_patterns: buildIndexName(config, type, version, suffixPattern),
         mappings: {
-          [type]: mappings,
+          [type]: template,
         },
-      }, template),
+      },
     }
   ));
 }
